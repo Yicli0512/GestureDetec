@@ -75,8 +75,9 @@ void myMotionEnergy(vector<Mat> mh, Mat& dst);
 Mat getTemplate(Mat origin);
 void LabelColor(const cv::Mat& labelImg, cv::Mat& colorLabelImg);
 cv::Mat_<uchar> ocmu_maxconnecteddomain(cv::Mat_<uchar> binImg);
-void getGesture(Mat origin, Mat templa);
+bool getGesture(Mat origin, Mat templa);
 int getTime();
+int result[2] = {0, 0};
 
 int main()
 {
@@ -126,12 +127,12 @@ int main()
 	myMotionHistory.push_back(fMH3);
 
 	////template detecting
-	Mat origin = imread("PA2_handshake_2.jpg", IMREAD_COLOR);
+	Mat origin = imread("PA2_rockingroll_2.jpg", IMREAD_COLOR);
 	Mat templa = getTemplate(origin);
 	resize(templa, templa, Size(), 0.4, 0.4);
 	imshow("resize", templa);
 	int lastTime = 0;
-
+	bool detec = false;
 	//waitKey(0);
 	while (1)
 	{
@@ -146,7 +147,7 @@ int main()
 			break;
 		}
 		//show the frame in "MyVideo" window
-		imshow("MyVideo0", frame0);
+		//imshow("MyVideo0", frame0);
 
 		// destination frame
 		Mat frameDest;
@@ -156,11 +157,16 @@ int main()
 		//----------------
 		mySkinDetect(frame, frameDest);
 		int now = getTime();
-		if (now - lastTime > 5)
+		if (now - lastTime > 2)
 		{
-			getGesture(frameDest, templa);
+			detec = getGesture(frameDest, templa);
 			lastTime = now;
 		}
+		if (detec) {
+			Rect rect(result[0], result[1], templa.cols, templa.rows);
+			cv::rectangle(frame0, rect, Scalar(255, 0, 0), 1, LINE_8, 0);
+		}
+		imshow("MyVideo0", frame0);
 		imshow("Skin", frameDest);
 
 		//----------------
@@ -276,70 +282,6 @@ Mat getTemplate(Mat origin) {
 	namedWindow("window2", 0);
 	imshow("window2", bina);
 	// find the biggest connected field
-	/*int count = 1;
-	int labe[500];
-	memset(labe,0,sizeof(labe));
-	for (int i = 0; i < bina.rows-1; i++) {
-		for (int j = 0; j < bina.cols-1; j++) {
-			if (bina.at<uchar>(i + 1, j + 1) == 0) {
-				continue;
-			}
-			else if (bina.at<uchar>(i + 1, j + 1) == bina.at<uchar>(i, j)) {
-				label.at<uchar>(i + 1, j + 1) = label.at<uchar>(i, j);
-				continue;
-			}
-			else if (bina.at<uchar>(i + 1, j + 1) == bina.at<uchar>(i + 1, j)) {
-				if (bina.at<uchar>(i + 1, j + 1) == bina.at<uchar>(i, j + 1)) {
-					if (label.at<uchar>(i + 1, j) == label.at<uchar>(i, j + 1)) {
-						label.at<uchar>(i + 1, j + 1) = label.at<uchar>(i + 1, j);
-						continue;
-					}
-					else {
-						int m = label.at<uchar>(i, j + 1);
-						int n = label.at<uchar>(i + 1, j);
-						labe[m] = n;
-						label.at<uchar>(i + 1, j + 1) = label.at<uchar>(i + 1, j);
-						continue;
-					}
-				}
-				else {
-					label.at<uchar>(i + 1, j + 1) = label.at<uchar>(i + 1, j);
-					continue;
-				}
-			}
-			else{
-				if (bina.at<uchar>(i + 1, j + 1) == bina.at<uchar>(i, j + 1)) {
-					label.at<uchar>(i + 1, j + 1) = label.at<uchar>(i, j + 1);
-					continue;
-				}
-				else {
-					label.at<uchar>(i + 1, j + 1) = count;
-					count = count + 1;
-					continue;
-				}
-			}
-		}
-	}*/
-	/*for (int i = 0; i < label.rows; i++) {
-		for (int j = 0; j < label.cols; j++) {
-			if (labe[label.at<uchar>(i, j)] == 0) {
-				continue;
-			}
-			else {
-				label.at<uchar>(i, j) = labe[label.at<uchar>(i, j)];
-			}
-		}
-	}*/
-	/*for (int i = 0; i < label.rows; i++) {
-		for (int j = 0; j < label.cols; j++) {
-			if (label.at<uchar>(i, j) * 25 > 255) {
-				label.at<uchar>(i, j) = 255;
-			}
-			else {
-				label.at<uchar>(i, j) = label.at<uchar>(i, j) * 25;
-			}
-		}
-	}*/
 	Mat label = Mat::zeros(bina.rows, bina.cols, CV_8UC1);
 	label = ocmu_maxconnecteddomain(bina);
 	/*cv::Mat colorLabelImg;
@@ -439,9 +381,11 @@ cv::Mat_<uchar> ocmu_maxconnecteddomain(cv::Mat_<uchar> binImg)
 	return maxRegion;
 }
 
-void getGesture(Mat frameDest, Mat templa) {
+bool getGesture(Mat frameDest, Mat templa) {
 	double sum;
 	double total = templa.rows * templa.cols;
+	double confidence = 0;
+	double max = 0;
 	Mat roi;
 	Mat rec;
 	for (int i = 0; i < frameDest.rows - templa.rows; i++) {
@@ -450,13 +394,19 @@ void getGesture(Mat frameDest, Mat templa) {
 			roi = frameDest(Range(i, i + templa.rows), Range(j, j + templa.cols));
 			absdiff(templa, roi, rec);
 			sum = countNonZero(rec);
-			if (sum / total > 0.65) {
-				cout << "find" << sum / total << endl;
-				break;
+			confidence = sum / total;
+			if (confidence > 0.67 && confidence > max) {
+				cout << "find" << confidence << endl;
+				max = confidence;
+				result[0] = i;
+				result[1] = j;
 			}
-			//cout << sum / total << endl;
 		}
 	}
+	if (max != 0) {
+		return true;
+	}
+	return false;
 }
 
 int getTime()
