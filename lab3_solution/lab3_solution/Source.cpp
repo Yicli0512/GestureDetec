@@ -80,7 +80,6 @@ bool getGesture(Mat origin, Mat templa);
 int getTime();
 int result[2] = { 0, 0 }; 
 double threshold_gesture = 0;
-int shift = 0;
 
 int main()
 {
@@ -130,7 +129,7 @@ int main()
 	myMotionHistory.push_back(fMH3);
 
 	////template detecting
-	String file_path = "PA2_yeah_2.jpg";
+	String file_path = "PA2_rockinroll_2.jpg";
 	Mat origin = imread(file_path, IMREAD_COLOR);
 	Mat templa = getTemplate(origin);
 	resize(templa, templa, Size(), 0.4, 0.4);
@@ -171,7 +170,7 @@ int main()
 			lastTime = now;
 		}
 		if (detec) {
-			Rect rect(result[1], result[0] - shift, templa.cols, templa.rows);
+			Rect rect(result[1], result[0], templa.cols, templa.rows);
 			cv::rectangle(frame0, rect, Scalar(255, 0, 0), 1, LINE_8, 0);
 		}
 		imshow("MyVideo0", frame0);
@@ -310,15 +309,12 @@ cv::Scalar GetRandomColor()
 
 double getThre(String file_path) {
 	if (file_path == "PA2_thunmbsup_2.jpg") {
-		shift = 50;
-		return 0.76;
+		return 0.2;
 	}
 	if (file_path == "PA2_yeah_2.jpg") {
-		shift = 50;
-		return 0.62;
+		return 0.2;
 	}
-	shift = 50;
-	return 0.65;
+	return 0.2;
 }
 
 void LabelColor(const cv::Mat& labelImg, cv::Mat& colorLabelImg)
@@ -404,8 +400,8 @@ cv::Mat_<uchar> ocmu_maxconnecteddomain(cv::Mat_<uchar> binImg)
 bool getGesture(Mat frameDest, Mat templa) {
 	double sum;
 	double total = templa.rows * templa.cols;
-	double confidence = 0;
-	double max = 0;
+	double confidence = 1;
+	double max = 1;
 	Mat roi;
 	Mat rec;
 	for (int i = 0; i < frameDest.rows - templa.rows; i++) {
@@ -415,7 +411,7 @@ bool getGesture(Mat frameDest, Mat templa) {
 			absdiff(templa, roi, rec);
 			sum = countNonZero(rec);
 			confidence = sum / total;
-			if (confidence > threshold_gesture && confidence > max) {
+			if (confidence < threshold_gesture && confidence < max) {
 				cout << "find" << confidence << endl;
 				max = confidence;
 				result[0] = i;
@@ -423,7 +419,7 @@ bool getGesture(Mat frameDest, Mat templa) {
 			}
 		}
 	}
-	if (max != 0) {
+	if (max != 1) {
 		return true;
 	}
 	return false;
