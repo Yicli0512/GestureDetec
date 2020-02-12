@@ -129,11 +129,12 @@ int main()
 	myMotionHistory.push_back(fMH3);
 
 	////template detecting
-	String file_path = "PA2_rockinroll_2.jpg";
+	String file_path = "PA2_ok_2.jpg";
 	Mat origin = imread(file_path, IMREAD_COLOR);
 	Mat templa = getTemplate(origin);
 	resize(templa, templa, Size(), 0.4, 0.4);
 	imshow("resize", templa);
+	//imwrite("PA2_result_templa.jpg", templa);
 	int lastTime = 0;
 	bool detec = false;
 	threshold_gesture = getThre(file_path);
@@ -143,7 +144,8 @@ int main()
 		// read a new frame from video
 		Mat frame;
 		bool bSuccess = cap.read(frame);
-		medianBlur(frame, frame, 7);
+		//medianBlur(frame, frame, 7);
+		//imwrite("PA2_result_origin.jpg", frame);
 		Mat frameDest;
 		/*imshow("MyVideoFI", frameDest);*/
 		//if not successful, break loop
@@ -172,6 +174,7 @@ int main()
 		if (detec) {
 			Rect rect(result[1], result[0], templa.cols, templa.rows);
 			cv::rectangle(frame0, rect, Scalar(255, 0, 0), 1, LINE_8, 0);
+			//imwrite("PA2_result.jpg", frame0);
 		}
 		imshow("MyVideo0", frame0);
 		imshow("Skin", frameDest);
@@ -286,15 +289,16 @@ Mat getTemplate(Mat origin) {
 	imshow("window1", skin);*/
 	Mat bina;
 	threshold(skin, bina, 110, 255, CV_THRESH_BINARY);
-	namedWindow("window2", 0);
-	imshow("window2", bina);
+	/*namedWindow("window2", 0);
+	imshow("window2", bina);*/
+	imwrite("PA2_result_bina.jpg", bina);
 	// find the biggest connected field
 	Mat label = Mat::zeros(bina.rows, bina.cols, CV_8UC1);
 	label = ocmu_maxconnecteddomain(bina);
 	/*cv::Mat colorLabelImg;
 	LabelColor(label, colorLabelImg);*/
-	namedWindow("window3", 0);
-	imshow("window3", label);
+	/*namedWindow("window3", 0);
+	imshow("window3", label);*/
 	return label;
 }
 
@@ -412,7 +416,6 @@ bool getGesture(Mat frameDest, Mat templa) {
 			sum = countNonZero(rec);
 			confidence = sum / total;
 			if (confidence < threshold_gesture && confidence < max) {
-				cout << "find" << confidence << endl;
 				max = confidence;
 				result[0] = i;
 				result[1] = j;
@@ -420,6 +423,7 @@ bool getGesture(Mat frameDest, Mat templa) {
 		}
 	}
 	if (max != 1) {
+		//cout << "find" << confidence << endl;
 		return true;
 	}
 	return false;
