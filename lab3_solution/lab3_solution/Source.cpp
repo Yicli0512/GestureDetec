@@ -75,9 +75,12 @@ void myMotionEnergy(vector<Mat> mh, Mat& dst);
 Mat getTemplate(Mat origin);
 void LabelColor(const cv::Mat& labelImg, cv::Mat& colorLabelImg);
 cv::Mat_<uchar> ocmu_maxconnecteddomain(cv::Mat_<uchar> binImg);
+double getThre(String file_path);
 bool getGesture(Mat origin, Mat templa);
 int getTime();
-int result[2] = {0, 0};
+int result[2] = { 0, 0 }; 
+double threshold_gesture = 0;
+int shift = 0;
 
 int main()
 {
@@ -114,7 +117,7 @@ int main()
 
 	//create a window called "MyVideo"
 	namedWindow("MyVideo", WINDOW_AUTOSIZE);
-	//namedWindow("MyVideoMH", WINDOW_AUTOSIZE);
+	namedWindow("MyVideoFI", WINDOW_AUTOSIZE);
 	namedWindow("Skin", WINDOW_AUTOSIZE);
 
 	vector<Mat> myMotionHistory;
@@ -127,19 +130,22 @@ int main()
 	myMotionHistory.push_back(fMH3);
 
 	////template detecting
-	Mat origin = imread("PA2_rockingroll_2.jpg", IMREAD_COLOR);
+	String file_path = "PA2_thunmbsup_2.jpg";
+	Mat origin = imread(file_path, IMREAD_COLOR);
 	Mat templa = getTemplate(origin);
 	resize(templa, templa, Size(), 0.4, 0.4);
 	imshow("resize", templa);
 	int lastTime = 0;
 	bool detec = false;
+	threshold_gesture = getThre(file_path);
 	//waitKey(0);
 	while (1)
 	{
 		// read a new frame from video
 		Mat frame;
 		bool bSuccess = cap.read(frame);
-
+		Mat frameDest;
+		/*imshow("MyVideoFI", frameDest);*/
 		//if not successful, break loop
 		if (!bSuccess)
 		{
@@ -150,12 +156,12 @@ int main()
 		//imshow("MyVideo0", frame0);
 
 		// destination frame
-		Mat frameDest;
 		frameDest = Mat::zeros(frame.rows, frame.cols, CV_8UC1); //Returns a zero array of same size as src mat, and of type CV_8UC1
 		//----------------
 		//	b) Skin color detection
 		//----------------
 		mySkinDetect(frame, frameDest);
+		medianBlur(frameDest, frameDest, 7);
 		int now = getTime();
 		if (now - lastTime > 2)
 		{
@@ -163,7 +169,7 @@ int main()
 			lastTime = now;
 		}
 		if (detec) {
-			Rect rect(result[0], result[1], templa.cols, templa.rows);
+			Rect rect(result[1], result[0] - shift, templa.cols, templa.rows);
 			cv::rectangle(frame0, rect, Scalar(255, 0, 0), 1, LINE_8, 0);
 		}
 		imshow("MyVideo0", frame0);
@@ -300,6 +306,13 @@ cv::Scalar GetRandomColor()
 	return cv::Scalar(b, g, r);
 }
 
+double getThre(String file_path) {
+	if (file_path == "PA2_thunmbsup_2.jpg") {
+		shift = 50;
+		return 0.76;
+	}
+	return 0.65;
+}
 
 void LabelColor(const cv::Mat& labelImg, cv::Mat& colorLabelImg)
 {
@@ -395,7 +408,7 @@ bool getGesture(Mat frameDest, Mat templa) {
 			absdiff(templa, roi, rec);
 			sum = countNonZero(rec);
 			confidence = sum / total;
-			if (confidence > 0.67 && confidence > max) {
+			if (confidence > threshold_gesture && confidence > max) {
 				cout << "find" << confidence << endl;
 				max = confidence;
 				result[0] = i;

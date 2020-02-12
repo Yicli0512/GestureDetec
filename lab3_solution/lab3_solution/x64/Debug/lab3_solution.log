@@ -1,25 +1,25 @@
 ﻿  Source.cpp
-C:\Users\yicli\source\repos\GestureDetec\lab3_solution\lab3_solution\Source.cpp(275,49): warning C4244: “=”: 从“double”转换到“_Tp”，可能丢失数据
+C:\Users\yicli\source\repos\GestureDetec\lab3_solution\lab3_solution\Source.cpp(281,49): warning C4244: “=”: 从“double”转换到“_Tp”，可能丢失数据
           with
           [
               _Tp=uchar
           ]
-C:\Users\yicli\source\repos\GestureDetec\lab3_solution\lab3_solution\Source.cpp(297,10): warning C4244: “初始化”: 从“double”转换到“uchar”，可能丢失数据
-C:\Users\yicli\source\repos\GestureDetec\lab3_solution\lab3_solution\Source.cpp(298,10): warning C4244: “初始化”: 从“double”转换到“uchar”，可能丢失数据
-C:\Users\yicli\source\repos\GestureDetec\lab3_solution\lab3_solution\Source.cpp(299,10): warning C4244: “初始化”: 从“double”转换到“uchar”，可能丢失数据
-C:\Users\yicli\source\repos\GestureDetec\lab3_solution\lab3_solution\Source.cpp(336,26): warning C4244: “=”: 从“_Tp”转换到“uchar”，可能丢失数据
+C:\Users\yicli\source\repos\GestureDetec\lab3_solution\lab3_solution\Source.cpp(303,10): warning C4244: “初始化”: 从“double”转换到“uchar”，可能丢失数据
+C:\Users\yicli\source\repos\GestureDetec\lab3_solution\lab3_solution\Source.cpp(304,10): warning C4244: “初始化”: 从“double”转换到“uchar”，可能丢失数据
+C:\Users\yicli\source\repos\GestureDetec\lab3_solution\lab3_solution\Source.cpp(305,10): warning C4244: “初始化”: 从“double”转换到“uchar”，可能丢失数据
+C:\Users\yicli\source\repos\GestureDetec\lab3_solution\lab3_solution\Source.cpp(349,26): warning C4244: “=”: 从“_Tp”转换到“uchar”，可能丢失数据
           with
           [
               _Tp=double
           ]
-C:\Users\yicli\source\repos\GestureDetec\lab3_solution\lab3_solution\Source.cpp(337,26): warning C4244: “=”: 从“_Tp”转换到“uchar”，可能丢失数据
+C:\Users\yicli\source\repos\GestureDetec\lab3_solution\lab3_solution\Source.cpp(350,26): warning C4244: “=”: 从“_Tp”转换到“uchar”，可能丢失数据
           with
           [
               _Tp=double
           ]
-C:\Users\yicli\source\repos\GestureDetec\lab3_solution\lab3_solution\Source.cpp(338,26): warning C4244: “=”: 从“_Tp”转换到“uchar”，可能丢失数据
+C:\Users\yicli\source\repos\GestureDetec\lab3_solution\lab3_solution\Source.cpp(351,26): warning C4244: “=”: 从“_Tp”转换到“uchar”，可能丢失数据
           with
           [
               _Tp=double
           ]
-  lab3_solution.vcxproj -> C:\Users\yicli\Source\Repos\GestureDetec\lab3_solution\x64\Debug\lab3_solution.exe
+  lab3_solution.vcxproj -> C:\Users\yicli\source\repos\GestureDetec\lab3_solution\x64\Debug\lab3_solution.exe
