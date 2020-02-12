@@ -130,7 +130,7 @@ int main()
 	myMotionHistory.push_back(fMH3);
 
 	////template detecting
-	String file_path = "PA2_thunmbsup_2.jpg";
+	String file_path = "PA2_yeah_2.jpg";
 	Mat origin = imread(file_path, IMREAD_COLOR);
 	Mat templa = getTemplate(origin);
 	resize(templa, templa, Size(), 0.4, 0.4);
@@ -144,6 +144,7 @@ int main()
 		// read a new frame from video
 		Mat frame;
 		bool bSuccess = cap.read(frame);
+		medianBlur(frame, frame, 7);
 		Mat frameDest;
 		/*imshow("MyVideoFI", frameDest);*/
 		//if not successful, break loop
@@ -161,7 +162,8 @@ int main()
 		//	b) Skin color detection
 		//----------------
 		mySkinDetect(frame, frameDest);
-		medianBlur(frameDest, frameDest, 7);
+		Mat element = getStructuringElement(MORPH_RECT, Size(10, 10));
+		morphologyEx(frameDest, frameDest, MORPH_OPEN, element);
 		int now = getTime();
 		if (now - lastTime > 2)
 		{
@@ -311,6 +313,11 @@ double getThre(String file_path) {
 		shift = 50;
 		return 0.76;
 	}
+	if (file_path == "PA2_yeah_2.jpg") {
+		shift = 50;
+		return 0.62;
+	}
+	shift = 50;
 	return 0.65;
 }
 
