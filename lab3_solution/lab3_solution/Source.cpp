@@ -70,16 +70,29 @@ Function that accumulates the frame differences for a certain number of pairs of
 */
 void myMotionEnergy(vector<Mat> mh, Mat& dst);
 /**
-
+Function that extract template from a imput image
+@param origin image that contains the template we want
 */
 Mat getTemplate(Mat origin);
-void LabelColor(const cv::Mat& labelImg, cv::Mat& colorLabelImg);
-cv::Mat_<uchar> ocmu_maxconnecteddomain(cv::Mat_<uchar> binImg);
-double getThre(String file_path);
+/*
+Function that select the largest connected field in a binary image
+@param binImg a binary image that contains the template
+*/
+Mat_<uchar> getLargestConnectedField(Mat_<uchar> binImg);
+/*
+Function that search a frame to see if it contains the gesture
+@param origin the image that would be searched
+@param templa the template used for template matching
+*/
 bool getGesture(Mat origin, Mat templa);
+/*
+Function that get the current time using the clock of computer
+*/
 int getTime();
+/*
+the upper-left position of the gesture we found
+*/
 int result[2] = { 0, 0 }; 
-double threshold_gesture = 0;
 
 int main()
 {
@@ -132,22 +145,19 @@ int main()
 	String file_path = "PA2_ok_2.jpg";
 	Mat origin = imread(file_path, IMREAD_COLOR);
 	Mat templa = getTemplate(origin);
+	//resize the template so that the size can fit the camera
 	resize(templa, templa, Size(), 0.4, 0.4);
 	imshow("resize", templa);
 	//imwrite("PA2_result_templa.jpg", templa);
 	int lastTime = 0;
 	bool detec = false;
-	threshold_gesture = getThre(file_path);
-	//waitKey(0);
 	while (1)
 	{
 		// read a new frame from video
 		Mat frame;
 		bool bSuccess = cap.read(frame);
-		//medianBlur(frame, frame, 7);
 		//imwrite("PA2_result_origin.jpg", frame);
 		Mat frameDest;
-		/*imshow("MyVideoFI", frameDest);*/
 		//if not successful, break loop
 		if (!bSuccess)
 		{
@@ -163,8 +173,14 @@ int main()
 		//	b) Skin color detection
 		//----------------
 		mySkinDetect(frame, frameDest);
+		//opening operation to erode the small noise in the image
 		Mat element = getStructuringElement(MORPH_RECT, Size(10, 10));
 		morphologyEx(frameDest, frameDest, MORPH_OPEN, element);
+		//----------------
+		//	c) template matching
+		//----------------
+
+		//set the frequency of template matching
 		int now = getTime();
 		if (now - lastTime > 2)
 		{
@@ -172,8 +188,9 @@ int main()
 			lastTime = now;
 		}
 		if (detec) {
+			//locate the gesture with a rectanglee
 			Rect rect(result[1], result[0], templa.cols, templa.rows);
-			cv::rectangle(frame0, rect, Scalar(255, 0, 0), 1, LINE_8, 0);
+			rectangle(frame0, rect, Scalar(255, 0, 0), 1, LINE_8, 0);
 			//imwrite("PA2_result.jpg", frame0);
 		}
 		imshow("MyVideo0", frame0);
@@ -294,113 +311,55 @@ Mat getTemplate(Mat origin) {
 	imwrite("PA2_result_bina.jpg", bina);
 	// find the biggest connected field
 	Mat label = Mat::zeros(bina.rows, bina.cols, CV_8UC1);
-	label = ocmu_maxconnecteddomain(bina);
-	/*cv::Mat colorLabelImg;
+	label = getLargestConnectedField(bina);
+	/*Mat colorLabelImg;
 	LabelColor(label, colorLabelImg);*/
 	/*namedWindow("window3", 0);
 	imshow("window3", label);*/
 	return label;
 }
 
-
-cv::Scalar GetRandomColor()
+/*
+Function that select the largest connected field in a binary image
+*/
+Mat_<uchar> getLargestConnectedField(Mat_<uchar> binImg)
 {
-	uchar r = 255 * (rand() / (1.0 + RAND_MAX));
-	uchar g = 255 * (rand() / (1.0 + RAND_MAX));
-	uchar b = 255 * (rand() / (1.0 + RAND_MAX));
-	return cv::Scalar(b, g, r);
-}
+	Mat_<uchar> maxRegion;
 
-double getThre(String file_path) {
-	if (file_path == "PA2_thunmbsup_2.jpg") {
-		return 0.2;
-	}
-	if (file_path == "PA2_yeah_2.jpg") {
-		return 0.2;
-	}
-	return 0.2;
-}
-
-void LabelColor(const cv::Mat& labelImg, cv::Mat& colorLabelImg)
-{
-	if (labelImg.empty() ||
-		labelImg.type() != CV_32SC1)
-	{
-		return;
-	}
-
-	std::map<int, cv::Scalar> colors;
-
-	int rows = labelImg.rows;
-	int cols = labelImg.cols;
-
-	colorLabelImg.release();
-	colorLabelImg.create(rows, cols, CV_8UC3);
-	colorLabelImg = cv::Scalar::all(0);
-
-	for (int i = 0; i < rows; i++)
-	{
-		const int* data_src = (int*)labelImg.ptr<int>(i);
-		uchar* data_dst = colorLabelImg.ptr<uchar>(i);
-		for (int j = 0; j < cols; j++)
-		{
-			int pixelValue = data_src[j];
-			if (pixelValue > 1)
-			{
-				if (colors.count(pixelValue) <= 0)
-				{
-					colors[pixelValue] = GetRandomColor();
-				}
-
-				cv::Scalar color = colors[pixelValue];
-				*data_dst++ = color[0];
-				*data_dst++ = color[1];
-				*data_dst++ = color[2];
-			}
-			else
-			{
-				data_dst++;
-				data_dst++;
-				data_dst++;
-			}
-		}
-	}
-}
-
-cv::Mat_<uchar> ocmu_maxconnecteddomain(cv::Mat_<uchar> binImg)
-{
-	cv::Mat_<uchar> maxRegion;
-
-	cv::Mat_<uchar> contourImg;
+	Mat_<uchar> contourImg;
 	binImg.copyTo(contourImg);
-	std::vector<std::vector<cv::Point>> contourVecs;
-	cv::findContours(contourImg, contourVecs, CV_RETR_EXTERNAL, \
+	std::vector<std::vector<Point>> contourVecs;
+	//Finds contours in a binary image.
+	findContours(contourImg, contourVecs, CV_RETR_EXTERNAL, \
 		CV_CHAIN_APPROX_NONE);
-
+	//find the connected field with largest area
 	if (contourVecs.size() > 0) { 
 		double maxArea = 0;
-		std::vector<cv::Point> maxContour;
+		std::vector<Point> maxContour;
 		for (size_t i = 0; i < contourVecs.size(); i++) {
-			double area = cv::contourArea(contourVecs[i]);
+			double area = contourArea(contourVecs[i]);
 			if (area > maxArea) {
 				maxArea = area;
 				maxContour = contourVecs[i];
 			}
 		}
 
-		cv::Rect maxRect = cv::boundingRect(maxContour);
+		Rect maxRect = boundingRect(maxContour);
 		int xBegPos = maxRect.y;
 		int yBegPos = maxRect.x;
 		int xEndPos = xBegPos + maxRect.height;
 		int yEndPos = yBegPos + maxRect.width;
 
-		maxRegion = binImg(cv::Range(xBegPos, xEndPos), \
-			cv::Range(yBegPos, yEndPos));
+		maxRegion = binImg(Range(xBegPos, xEndPos), \
+			Range(yBegPos, yEndPos));
 	}
 
 	return maxRegion;
 }
 
+/*
+Function that search a frame to see if it contains the gesture
+*/
 bool getGesture(Mat frameDest, Mat templa) {
 	double sum;
 	double total = templa.rows * templa.cols;
@@ -408,6 +367,7 @@ bool getGesture(Mat frameDest, Mat templa) {
 	double max = 1;
 	Mat roi;
 	Mat rec;
+	// scanning through the whole image with a template-size window and find the most matching one
 	for (int i = 0; i < frameDest.rows - templa.rows; i++) {
 		for (int j = 0; j < frameDest.cols - templa.cols; j++) {
 			sum = 0;
@@ -415,7 +375,7 @@ bool getGesture(Mat frameDest, Mat templa) {
 			absdiff(templa, roi, rec);
 			sum = countNonZero(rec);
 			confidence = sum / total;
-			if (confidence < threshold_gesture && confidence < max) {
+			if (confidence < 0.2 && confidence < max) {
 				max = confidence;
 				result[0] = i;
 				result[1] = j;
@@ -429,6 +389,9 @@ bool getGesture(Mat frameDest, Mat templa) {
 	return false;
 }
 
+/*
+the upper-left position of the gesture we found
+*/
 int getTime()
 {
 	return clock() / CLOCKS_PER_SEC;
